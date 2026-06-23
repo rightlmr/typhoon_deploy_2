@@ -1,0 +1,40 @@
+# Typhoon Route A deployment config.
+# All paths are relative to this project root and are container-friendly.
+
+detection_model:
+  type: "heatmap_unet"
+  model_dir: "checkpoints/detection"
+  checkpoint: "checkpoints/detection/finetune_best.ckpt"
+  channels: ["msl", "vo_850", "t_500"]
+  norm_stats: "checkpoints/detection/norm_stats_aifs.json"
+  domain: {lat_min: 0.0, lat_max: 70.0, lon_min: 100.0, lon_max: 320.0, res: 0.25}
+  decode: {conf_thresh: 0.5, lat_filter: [0.0, 40.0]}
+  msl_min_radius_km: 100
+  model: {base_channels: 32, pad_multiple: 32}
+  aifs:
+    tensor_channel_order: ["u10", "v10", "msl", "t2", "u850", "v850", "q850", "t850", "u700", "v700", "q700", "t700", "u500", "v500", "q500", "t500"]
+  patch_size: 40
+  eps: 0.1
+
+v9_filter: {enabled: false}
+
+correction_model:
+  enabled: true
+  checkpoint: "checkpoints/correction/ckpts/epoch=050-val_loss=39.0316.ckpt"
+  config: "checkpoints/correction/fastervit_correction_aifs_historytimestamps_dim64.yaml"
+
+stats:
+  aifs_stats: "checkpoints/correction/stats/normalization_stats.json"
+  ibtracs_stats: "checkpoints/correction/stats/ibtracs_stats_correction_log1p.json"
+
+data:
+  aifs_grib_dir: "data/aifs_grib"
+  init_date: "latest"
+
+output:
+  output_dir: "output"
+
+inference:
+  device: "auto"
+  lead_min: null
+  lead_max: null
