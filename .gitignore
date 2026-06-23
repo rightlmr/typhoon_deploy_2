@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+output/*
+!output/.gitkeep
+
+data/aifs_grib/*
+!data/aifs_grib/.gitkeep
+
+*.log
+*.tmp
+
+# Model artifacts are published as GitHub Release assets for this repository.
+*.ckpt
