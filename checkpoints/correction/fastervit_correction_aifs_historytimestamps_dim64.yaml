@@ -1,0 +1,131 @@
+# FasterViT 台风强度订正模型 - AIFS 历史时间步融合版本
+# ===============================================================
+# 配置说明:
+#   - 数据源: AIFS 预报场 (GRIB2)
+#   - 输入变量: AIFS 变量列表 (见 data_args.aifs_vars)
+#   - 支持历史时间步融合 (history_timesteps)
+#   - 支持预报时效嵌入 (use_forecast_hour)
+
+
+model_args:
+    model_name: 'fastervit_correction_forecast_hour_historytimestamps'
+
+    # ============================================
+    # 历史时间步融合参数
+    # ============================================
+    share_weights: false
+    fusion_type: 'attention'
+    hidden_dim: 256
+
+    # ============================================
+    # FasterViT 结构参数
+    # ============================================
+    img_size: 32
+    in_dim: 64
+    dim: 64
+    depths: [2, 2, 6, 2]
+    num_heads: [4, 8, 16, 32]
+    window_size: [2, 2, 2, 2]
+    ct_size: 2
+    mlp_ratio: 4.0
+    qkv_bias: true
+    qk_scale: null
+
+    hat: [true, true, true, false]
+    do_propagation: true
+
+    layer_scale: null
+    layer_scale_conv: null
+    layer_norm_last: false
+
+    drop_rate: 0.1
+    attn_drop_rate: 0.1
+    drop_path_rate: 0.1
+
+    # 损失函数
+    wind_weight: 1.0
+    pres_weight: 1.0
+    criterion: 'mse'
+
+    # 训练参数
+    epochs: 100
+    learning_rate: 0.001
+    weight_decay: 0.01
+
+    # ReduceLROnPlateau 参数 (scheduler='plateau' 时生效)
+    scheduler: 'plateau'
+    plateau_factor: 0.5
+    plateau_patience: 5
+    plateau_monitor: 'val_loss'
+
+
+data_args:
+    # ============================================
+    # 数据源配置
+    # ============================================
+    dataset_type: 'aifs'
+    batch_size: 16
+
+    aifs_data_dir: '/media/lthpc/TYPHOON1/AIFS_MERGED'
+    aifs_data_format: 'nc'
+
+    # IBTrACS CSV
+    ibtracs_data_dir: 'typhoon_data/ibtracs_data/ibtracs.ALL.list.v04r01.csv'
+
+    # ============================================
+    # AIFS 变量配置
+    # ============================================
+    aifs_vars: ['u10', 'v10', 'mslp', 't2', 'u500', 'v500']
+
+    # ============================================
+    # 数据集筛选 / 划分
+    # ============================================
+    basin: 'WP'
+    field_size: 32
+
+    # 时间分辨率 (6 小时，与 AIFS 数据对齐)
+    time_resolution_hours: 6
+
+    # 年份/月份划分
+    train_years: ["202404", "202405", "202406", "202407", "202408", "202409", "202410", "202411", "202412", "202501", "202502", "202503", "202504", "202505", "202506"]
+    val_years: ["202507", "202508"]
+    eval_years: ["202507", "202508"]
+
+    # 目标变量 (来自 IBTrACS)
+    vars: ['LAT', 'LON', 'USA_WIND', 'USA_PRES']
+
+    # ============================================
+    # 标准化参数
+    # ============================================
+    is_normalize: True
+    is_normalize_aifs: True
+
+    # IBTrACS 强度统计 (log1p + Z-score)
+    ibtracs_stats_file: 'typhoon_data/ibtracs_data/ibtracs_stats_correction_log1p.json'
+
+    # AIFS 全球分布统计 (zscore)
+    aifs_stats_file: 'typhoon_data/aifs_data/stats_json/normalization_stats.json'
+
+    # ============================================
+    # DataLoader / 缓存
+    # ============================================
+    num_workers: 2
+    pin_memory: True
+    persistent_workers: True
+    prefetch_factor: 8
+    max_open_nc_files: 300
+
+    # ============================================
+    # 历史时间步配置
+    # ============================================
+    # 单位: 小时. 例如 [6, 12, 18] 表示当前 + 三个历史时间步, 共 4 个时间步。
+    # 必须是 time_resolution_hours 的整数倍。
+    history_timesteps: [6, 12, 18]
+
+    # ============================================
+    # forecast_hour 配置
+    # ============================================
+    # AIFS 有预报时效概念 -> 开启嵌入
+    use_forecast_hour: True
+    forecast_hour_step: 6
+    forecast_hour_max: 240
