@@ -24,10 +24,13 @@ The local package contains two checkpoint files, but the GitHub repository
 publishes them as Release assets instead of normal Git files:
 
 - `finetune_best.ckpt`
-- `epoch=050-val_loss=39.0316.ckpt`
+- `epoch.050-val_loss.39.0316.ckpt`
 
 After cloning, download those assets from the repository release page and place
 them back at the paths referenced by `config.yaml`.
+GitHub normalizes the correction asset name, so rename
+`epoch.050-val_loss.39.0316.ckpt` to
+`checkpoints/correction/ckpts/epoch=050-val_loss=39.0316.ckpt`.
 
 ## Environment
 
