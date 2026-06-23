@@ -1,0 +1,48 @@
+{
+  "target_variables": [
+    "USA_WIND",
+    "USA_PRES"
+  ],
+  "normalization_method": "log1p_zscore",
+  "pres_baseline": 1040,
+  "transformers": {
+    "USA_WIND": {
+      "method": "log1p_zscore",
+      "lambda": null,
+      "is_pressure_deficit": false
+    },
+    "USA_PRES": {
+      "method": "log1p_zscore",
+      "lambda": null,
+      "is_pressure_deficit": true
+    }
+  },
+  "stats": {
+    "USA_WIND": {
+      "unit": "knots",
+      "original_mean": 47.03942108154297,
+      "original_std": 26.817642211914062,
+      "original_min": 10.0,
+      "original_max": 155.0,
+      "transformed_mean": 3.741299629211426,
+      "transformed_std": 0.4973571300506592,
+      "transformed_min": 2.397895336151123,
+      "transformed_max": 5.049856185913086
+    },
+    "USA_PRES": {
+      "unit": "hPa (pressure deficit)",
+      "original_mean": 990.4243774414062,
+      "original_std": 17.535554885864258,
+      "original_min": 895.0,
+      "original_max": 1014.0,
+      "transformed_mean": 3.8756144046783447,
+      "transformed_std": 0.29476022720336914,
+      "transformed_min": 3.295836925506592,
+      "transformed_max": 4.983606815338135
+    }
+  },
+  "num_features": 2,
+  "year": 2024,
+  "basin": null,
+  "total_samples": 5740
+}
