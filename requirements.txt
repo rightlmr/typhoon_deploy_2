@@ -1,0 +1,21 @@
+# Linux target: Ubuntu 22.04, Python 3.10, CUDA 11.8.
+
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch==2.0.1+cu118
+torchvision==0.15.2+cu118
+
+numpy>=1.24,<2.0
+pandas>=2.0
+xarray>=2023.1
+scipy>=1.10
+netCDF4>=1.6
+
+pygrib>=2.1.4
+eccodes>=1.6
+
+timm>=0.9
+pyyaml>=6.0
+tqdm>=4.65
+munch>=3.0
+toml>=0.10.2
+watchdog>=3.0
