@@ -145,6 +145,28 @@ def _require_pygrib() -> Any:
     return pygrib
 
 
+def _canonicalize_grib_global(values: np.ndarray, message: Any) -> np.ndarray:
+    """Return GRIB values on north-to-south lat and 0-360 increasing lon axes."""
+
+    values = np.asarray(values, dtype=np.float32)
+    if values.shape != (len(GLOBAL_LAT), len(GLOBAL_LON)):
+        return values
+
+    try:
+        lats, lons = message.latlons()
+    except Exception:
+        return values
+
+    if lats.shape != values.shape or lons.shape != values.shape:
+        return values
+
+    lat1d = np.asarray(lats[:, 0], dtype=np.float64)
+    lon1d = np.mod(np.asarray(lons[0, :], dtype=np.float64), 360.0)
+    lat_order = np.argsort(-lat1d)
+    lon_order = np.argsort(lon1d)
+    return values[np.ix_(lat_order, lon_order)].astype(np.float32, copy=False)
+
+
 def read_aifs_variable(path: str | Path, internal_name: str) -> np.ndarray:
     """Read one configured variable from an AIFS GRIB2 file."""
 
@@ -161,7 +183,7 @@ def read_aifs_variable(path: str | Path, internal_name: str) -> np.ndarray:
         selected = grbs.select(shortName=short_name, typeOfLevel=type_of_level, level=level)
         if not selected:
             raise KeyError(f"GRIB variable not found: {GRIB_KEYS[key]} in {path}")
-        return np.asarray(selected[0].values, dtype=np.float32)
+        return _canonicalize_grib_global(selected[0].values, selected[0])
 
 
 def read_aifs_pt_variable(
