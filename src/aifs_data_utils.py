@@ -190,7 +190,29 @@ def _read_grib_var(grbs, short_name: str, type_of_level: str, level: int):
     if not matches:
         raise ValueError(f"Variable not found: shortName={short_name}, "
                          f"typeOfLevel={type_of_level}, level={level}")
-    return matches[0].values.astype(np.float32)
+    return _canonicalize_grib_global(matches[0].values, matches[0])
+
+
+def _canonicalize_grib_global(values: np.ndarray, message) -> np.ndarray:
+    """Return GRIB values on north-to-south lat and 0-360 increasing lon axes."""
+
+    values = np.asarray(values, dtype=np.float32)
+    if values.shape != (len(LATS_GLOBAL), len(LONS_GLOBAL)):
+        return values
+
+    try:
+        lats, lons = message.latlons()
+    except Exception:
+        return values
+
+    if lats.shape != values.shape or lons.shape != values.shape:
+        return values
+
+    lat1d = np.asarray(lats[:, 0], dtype=np.float64)
+    lon1d = np.mod(np.asarray(lons[0, :], dtype=np.float64), 360.0)
+    lat_order = np.argsort(-lat1d)
+    lon_order = np.argsort(lon1d)
+    return values[np.ix_(lat_order, lon_order)].astype(np.float32, copy=False)
 
 
 def _read_all_grib_vars(grib_path: str, var_list: List[str]) -> Dict[str, np.ndarray]:
