@@ -83,6 +83,32 @@ Outputs:
 - `output/detections_raw.csv`: decoded heatmap detections before correction.
 - `output/all_results.csv`: final route A rows with `LAT`, `LON`, `MSL_MIN`, `CONF`, `PRED_WIND`, `PRED_PRES`.
 
+## Gate Check
+
+Run the integration gates on the Linux target after downloading the release
+checkpoint assets and placing them at the paths referenced by `config.yaml`.
+
+```bash
+python scripts/gate_check.py \
+  --config config.yaml \
+  --grib data/aifs_grib/AIFS_2024_09_07_12_FCST_000h.grib2 \
+  --truth-lat 21.0 --truth-lon 106.0 \
+  --truth-name "Yagi 2024-09-07 12Z"
+```
+
+Arguments:
+
+- `--grib`: one known strong-typhoon, short-lead AIFS GRIB2 sample.
+- `--truth-lat` / `--truth-lon`: IBTrACS truth position for that valid time. Longitudes may be `-180..180` or `0..360`; the script normalizes with `lon % 360`.
+- `--truth-name`: optional label printed in the report.
+- `--dir`: optional GRIB directory for the full latest-init directory gate.
+- `--device`: optional override, for example `cpu` or `cuda`.
+
+The script prints `PASS`, `WARN`, `FAIL`, or `SKIPPED` for Gates 0-7 and exits
+with code `1` if any gate fails. If Gate 4 fails, send the GRIB filename, truth
+position, predicted top point, and the diagnostic block in the output; that is
+the evidence needed to debug latitude order or longitude wrapping.
+
 ## Config Notes
 
 - `detection_model.channels`: locator input channels, default `["msl", "vo_850", "t_500"]`.
