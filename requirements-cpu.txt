@@ -1,0 +1,27 @@
+# CPU-only dependency set for Dockerfile.cpu.
+#
+# Torch is installed explicitly in Dockerfile.cpu before this file:
+#   TORCH_VERSION=2.0.1+cpu
+#   TORCHVISION_VERSION=0.15.2+cpu
+#
+# If the Linux CPU gate fails at Gate 1 checkpoint loading, rebuild with a
+# different compatible CPU torch version, for example:
+#   docker build -f Dockerfile.cpu \
+#     --build-arg TORCH_VERSION=2.6.0+cpu \
+#     --build-arg TORCHVISION_VERSION=0.21.0+cpu \
+#     -t typhoon_deploy_2:cpu-v0.1 .
+
+numpy>=1.24,<2.0
+pandas>=2.0
+xarray>=2023.1
+scipy>=1.10
+netCDF4>=1.6
+
+pygrib>=2.1.4
+eccodes>=1.6
+
+timm>=0.9
+pyyaml>=6.0
+tqdm>=4.65
+munch>=3.0
+toml>=0.10.2

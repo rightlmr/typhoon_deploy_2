@@ -279,3 +279,31 @@ ls -lh data/2026053100/20260531000000-{0,6,12,18}h-oper-fc.grib2
 4. If validating `6h`, previous-day history files may be required for older target forecast hours.
 5. Gate 4 requires truth for the GRIB effective time, not the initial time.
 6. A Gate 4 WARN can still be acceptable for deployment if the distance is close to the strict threshold and all end-to-end gates pass.
+
+## CPU Offline Docker Validation
+
+Status: pending Linux operator validation.
+
+Codex authored CPU-only offline Docker assets on Windows according to `DEPLOY2_CPU_DOCKER_OFFLINE.md`. Codex did not run Docker build, CPU gate validation, network-off inference, or offline target deployment.
+
+Added files:
+
+```text
+Dockerfile.cpu
+.dockerignore
+docker/entrypoint.sh
+src/watchdog_runner.py
+requirements-cpu.txt
+scripts/run_cpu_gate.sh
+README_DEPLOY.md
+```
+
+The Linux operator should fill the CPU/offline results table in `README_DEPLOY.md` after running:
+
+```text
+docker build
+MODE=gate CPU validation
+--network none runtime validation
+docker save / docker load
+watchdog start / status / stop
+```
