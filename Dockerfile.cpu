@@ -29,12 +29,13 @@ COPY requirements-cpu.txt /app/requirements-cpu.txt
 
 ARG TORCH_VERSION=2.0.1+cpu
 ARG TORCHVISION_VERSION=0.15.2+cpu
+ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir \
         torch==${TORCH_VERSION} \
         torchvision==${TORCHVISION_VERSION} \
-        --index-url https://mirrors.tuna.tsinghua.edu.cn/pytorch-wheels/cpu/ \
+        --index-url ${PYTORCH_INDEX_URL} \
     && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements-cpu.txt
 
 COPY . /app
