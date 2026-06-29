@@ -7,15 +7,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash \
-    ca-certificates \
-    gcc \
-    g++ \
-    libeccodes-dev \
-    libeccodes-data \
-    libgomp1 \
-    libproj-dev \
+RUN set -eux; \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's|http://deb.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g; s|http://security.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources; \
+    fi; \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's|http://deb.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g; s|http://security.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list; \
+    fi; \
+    apt-get update && apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        gcc \
+        g++ \
+        libeccodes-dev \
+        libeccodes-data \
+        libgomp1 \
+        libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-cpu.txt /app/requirements-cpu.txt
@@ -27,8 +34,8 @@ RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir \
         torch==${TORCH_VERSION} \
         torchvision==${TORCHVISION_VERSION} \
-        --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements-cpu.txt
+        --index-url https://mirrors.tuna.tsinghua.edu.cn/pytorch-wheels/cpu/ \
+    && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements-cpu.txt
 
 COPY . /app
 
