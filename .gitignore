@@ -10,6 +10,8 @@ output/*
 
 data/aifs_grib/*
 !data/aifs_grib/.gitkeep
+data/truth/*
+!data/truth/.gitkeep
 
 *.log
 *.tmp
