@@ -143,8 +143,11 @@ docker run -d --name tc_watch \
   -v /data/out:/app/output \
   -e MODE=watchdog \
   typhoon_deploy_2:cpu-v0.1 \
-  --poll-interval 300
+  --poll-interval 300 \
+  --lead_max 120
 ```
+
+Use `--lead_min` and `--lead_max` to skip GRIB files outside the operational forecast-hour range. This is useful when very long lead files do not contain every variable required by the locator.
 
 View logs:
 

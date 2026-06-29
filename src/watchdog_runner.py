@@ -19,6 +19,7 @@ for path in (PROJECT_ROOT, SRC_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+from aifs_data_utils import parse_aifs_filename
 from pipeline_routeA import TyphoonRouteAPipeline, load_config_from_yaml
 
 
@@ -121,6 +122,21 @@ def build_status(
     }
 
 
+def filter_files_by_lead(files: list[str], lead_min: int | None, lead_max: int | None) -> list[str]:
+    if lead_min is None and lead_max is None:
+        return files
+
+    filtered: list[str] = []
+    for path in files:
+        try:
+            _, lead = parse_aifs_filename(path)
+        except ValueError:
+            continue
+        if (lead_min is None or lead >= lead_min) and (lead_max is None or lead <= lead_max):
+            filtered.append(path)
+    return filtered
+
+
 def process_once(
     pipeline: TyphoonRouteAPipeline,
     config: Mapping[str, Any],
@@ -130,10 +146,13 @@ def process_once(
     status_path: Path,
     poll_interval: int,
     errors_recent: list[dict[str, str]],
+    lead_min: int | None,
+    lead_max: int | None,
 ) -> int:
     processed = load_processed(processed_log)
     data_cfg = dict(config.get("data", {}))
     selected_files = pipeline._select_grib_files(str(aifs_dir), data_cfg.get("init_date"))
+    selected_files = filter_files_by_lead(selected_files, lead_min, lead_max)
     pending = [path for path in selected_files if path not in processed]
 
     write_status(
@@ -147,7 +166,6 @@ def process_once(
 
     print(f"[Watchdog] {utc_now()} processing {len(pending)} new GRIB file(s)")
     det_cfg = dict(config.get("detection_model", {}))
-    inf_cfg = dict(config.get("inference", {}))
     decode_cfg = dict(det_cfg.get("decode", {}))
     cfg_lat_filter = decode_cfg.get("lat_filter", [0.0, 40.0])
 
@@ -158,8 +176,8 @@ def process_once(
             patch_size=int(det_cfg.get("patch_size", 40)),
             eps=float(det_cfg.get("eps", 0.1)),
             lat_filter=(float(cfg_lat_filter[0]), float(cfg_lat_filter[1])),
-            lead_min=inf_cfg.get("lead_min"),
-            lead_max=inf_cfg.get("lead_max"),
+            lead_min=lead_min,
+            lead_max=lead_max,
             init_date=data_cfg.get("init_date"),
         )
     except Exception as exc:
@@ -201,6 +219,8 @@ def main() -> int:
     parser.add_argument("--status", action="store_true", help="Print watchdog status JSON and exit")
     parser.add_argument("--aifs-dir", default=None)
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--lead-min", "--lead_min", dest="lead_min", type=int, default=None)
+    parser.add_argument("--lead-max", "--lead_max", dest="lead_max", type=int, default=None)
     args = parser.parse_args()
 
     config_path = Path(args.config)
@@ -215,6 +235,7 @@ def main() -> int:
 
     data_cfg = dict(config.get("data", {}))
     output_cfg = dict(config.get("output", {}))
+    inf_cfg = dict(config.get("inference", {}))
     watchdog_cfg = dict(config.get("watchdog", {}))
 
     aifs_dir = resolve_path(root, args.aifs_dir or data_cfg.get("aifs_grib_dir", "data/aifs_grib"))
@@ -225,6 +246,8 @@ def main() -> int:
     status_path = output_dir / "watchdog_status.json"
     processed_log = output_dir / "processed.log"
     poll_interval = int(args.poll_interval or watchdog_cfg.get("poll_interval_sec", DEFAULT_POLL_INTERVAL_SEC))
+    lead_min = args.lead_min if args.lead_min is not None else inf_cfg.get("lead_min")
+    lead_max = args.lead_max if args.lead_max is not None else inf_cfg.get("lead_max")
 
     if args.status:
         print(json.dumps(read_status(status_path), indent=2, sort_keys=True))
@@ -259,6 +282,8 @@ def main() -> int:
                 status_path=status_path,
                 poll_interval=poll_interval,
                 errors_recent=errors_recent,
+                lead_min=lead_min,
+                lead_max=lead_max,
             )
             if args.once:
                 break
@@ -267,6 +292,7 @@ def main() -> int:
         processed = load_processed(processed_log)
         if aifs_dir.exists():
             selected_files = pipeline._select_grib_files(str(aifs_dir), data_cfg.get("init_date"))
+            selected_files = filter_files_by_lead(selected_files, lead_min, lead_max)
         else:
             selected_files = []
         pending_count = len([path for path in selected_files if path not in processed])
