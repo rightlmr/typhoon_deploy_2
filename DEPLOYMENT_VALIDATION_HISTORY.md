@@ -282,9 +282,9 @@ ls -lh data/2026053100/20260531000000-{0,6,12,18}h-oper-fc.grib2
 
 ## CPU Offline Docker Validation
 
-Status: pending Linux operator validation.
+Status: Linux build host validation completed by user on 2026-06-30. Offline target `docker load` and final target-host run remain the next operational step unless recorded separately.
 
-Codex authored CPU-only offline Docker assets on Windows according to `DEPLOY2_CPU_DOCKER_OFFLINE.md`. Codex did not run Docker build, CPU gate validation, network-off inference, or offline target deployment.
+Codex authored CPU-only offline Docker assets on Windows according to `DEPLOY2_CPU_DOCKER_OFFLINE.md`. Codex did not run Docker build, CPU gate validation, network-off inference, or offline target deployment. The Linux operator later reported the runtime validation results listed below.
 
 Added files:
 
@@ -298,12 +298,67 @@ scripts/run_cpu_gate.sh
 README_DEPLOY.md
 ```
 
-The Linux operator should fill the CPU/offline results table in `README_DEPLOY.md` after running:
+Docker build fixes made during Linux validation:
 
 ```text
-docker build
-MODE=gate CPU validation
---network none runtime validation
-docker save / docker load
-watchdog start / status / stop
+build(cpu): use Tsinghua mirrors for Docker build
+build(cpu): restore reliable PyTorch CPU index
+build(cpu): preinstall torch dependencies from PyPI mirror
+fix(watchdog): support lead range arguments
+```
+
+Observed Linux build behavior:
+
+- Initial Docker permission issue was resolved by using `sudo docker`.
+- The CPU image build completed successfully as `typhoon_deploy_2:cpu-v0.1`.
+- The final Docker build warning about commit metadata not being captured was non-blocking.
+- Tsinghua PyTorch wheel URL did not work as a pip simple index, so the Dockerfile now keeps apt and normal PyPI packages on mirrors while using the reliable official PyTorch CPU wheel index.
+- PyTorch dependencies are preinstalled from the PyPI mirror, then `torch` and `torchvision` are installed with `--no-deps` to avoid falling back to `files.pythonhosted.org` during dependency resolution.
+
+Linux validation reported by the user:
+
+```text
+CPU Gate validation: completed
+Network-off MODE=once validation: completed
+Network-off output files: output_cpu_offline_test/all_results.csv and detections_raw.csv
+Watchdog start/status validation: completed, status normal
+```
+
+The network-off once run produced CSV output. The first rows showed valid detections for the `20260531000000` cycle, including:
+
+```text
+2026-05-31T00:00:00,21.000001040441134,127.74994513691126,...
+2026-05-31T06:00:00,21.75002020015745,127.74997694295962,...
+2026-05-31T12:00:00,22.50003671093873,127.49996302118961,...
+```
+
+During a broad once run, the pipeline logged a non-fatal error on:
+
+```text
+20260531000000-222h-oper-fc.grib2: no matches found
+```
+
+This means that very long lead GRIB file did not contain one of the locator-required variables. The pipeline caught the exception and continued, producing output. Operational runs should constrain the lead range when needed:
+
+```bash
+--lead_max 120
+```
+
+The watchdog was then patched to accept both dash and underscore argument forms:
+
+```text
+--lead-max / --lead_max
+--lead-min / --lead_min
+```
+
+Recommended next step for offline delivery:
+
+```bash
+sudo docker save typhoon_deploy_2:cpu-v0.1 | gzip > typhoon_deploy_2_cpu_v0.1.tar.gz
+```
+
+Then copy the tarball to the offline CPU target host and run:
+
+```bash
+gunzip -c typhoon_deploy_2_cpu_v0.1.tar.gz | sudo docker load
 ```

@@ -204,19 +204,21 @@ MODE=shell     /bin/bash
 
 ## Linux Validation Table
 
-Fill this table after running the commands on Linux.
+This table records the user-reported Linux build-host validation status as of 2026-06-30.
 
 | Item | Command Section | Expected | Actual Result |
 |---|---|---|---|
-| CPU environment | CPU Gate Validation | `cuda_available=False` | |
-| Gate 1 checkpoint load | CPU Gate Validation | PASS | |
-| Gate 4 coordinate alignment | CPU Gate Validation | PASS or acceptable WARN for known truth | |
-| Gate 5 CPU end-to-end | CPU Gate Validation | wind and pressure non-NaN | |
-| Network-off once | Network-Off Runtime Validation | succeeds with `--network none` | |
-| Docker save/load | Save Offline Image / Load And Run | target can load image | |
-| Watchdog start | Watchdog Mode | container keeps polling | |
-| Watchdog status | Watchdog Mode | `watchdog_status.json` is readable | |
-| Watchdog stop | Watchdog Mode | state becomes `stopped` | |
+| CPU image build | Build On Online Linux | image builds successfully | Completed on Linux build host |
+| CPU environment | CPU Gate Validation | `cuda_available=False` | Completed as part of CPU gate |
+| Gate 1 checkpoint load | CPU Gate Validation | PASS | Completed as part of CPU gate |
+| Gate 4 coordinate alignment | CPU Gate Validation | PASS or acceptable WARN for known truth | Completed as part of CPU gate |
+| Gate 5 CPU end-to-end | CPU Gate Validation | wind and pressure non-NaN | Completed as part of CPU gate |
+| Network-off once | Network-Off Runtime Validation | succeeds with `--network none` | Completed; CSV output produced |
+| Long-lead handling | Network-Off Runtime Validation | unsupported long leads can be skipped | Use `--lead_max 120` to avoid the observed `222h` missing-variable file |
+| Watchdog start | Watchdog Mode | container keeps polling | Completed after adding lead-range argument support |
+| Watchdog status | Watchdog Mode | `watchdog_status.json` is readable | User reported status normal |
+| Watchdog stop | Watchdog Mode | state becomes `stopped` | Not separately recorded |
+| Docker save/load | Save Offline Image / Load And Run | target can load image | Pending offline target delivery |
 
 ## Troubleshooting
 
